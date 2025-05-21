@@ -1,29 +1,18 @@
 backend:
   name: github
-  repo:בטח, ה eli1939/-1939
+  repo: eli1939/-1939
   branch: main
   local_backend: true
 
-media_folder:נה הקוד הנקי של `config.yml` עם ההגדרה `local_ "static/assets"
+media_folder: "static/assets"
 public_folder: "/assets"
 
 collections:
-  - name: "test_backend: true` וההזחות הנכונות.
-פשוט העתק את כל מה שבתוך התיבה והcollection"
+  - name: "test_collection"
     label: "אוסף בדיקה"
     folder: "_posts/test"
-    דבק אותו במקום כל התוכן הקיים בקובץ `admin/config.yml` שלך.create: true
+    create: true
     slug: "{{year}}-{{month}}-{{day}}-{{slug}}"
     fields:
-
-
-```yaml
-backend:
-  name: github
-  repo: eli1939/-1939
       - {label: "כותרת", name: "title", widget: "string"}
-      - {  branch: main
-  local_backend: true
-
-media_folder: "static/assets"
-public_label: "גוף טקסט", name: "body", widget: "markdown"}
+      - {label: "גוף טקסט", name: "body", widget: "markdown"}
