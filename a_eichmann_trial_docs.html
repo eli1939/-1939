@@ -1,0 +1,740 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>מהגירה להריגה – "פתרונות" הנאצים ל"שאלה היהודית"</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+    <!-- Visualization & Content Choices:
+        - Core Argument Timeline: Chart.js line graph, HTML text displays.
+        - Phases & Events: Structured HTML for background, evidence (quotes), interpretation. Collapsible via JS.
+        - Territory Strips: Collapsible HTML sections for geographic context.
+        - CONFIRMATION: NO SVG graphics used. NO Mermaid JS used.
+    -->
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f0f4f8; 
+        }
+        .hebrew-title {
+            font-family: 'Arial', sans-serif; 
+        }
+        .card {
+            background-color: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            border-left: 5px solid #3E8989; 
+        }
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 20px rgba(0,0,0,0.15);
+        }
+        .chart-container { 
+            position: relative; width: 100%; max-width: 500px; margin-left: auto; margin-right: auto; height: 300px; max-height: 350px;
+        }
+        .timeline-chart-container { 
+            position: relative; width: 100%; max-width: 900px; margin: 1rem auto; height: 380px; max-height: 450px;
+            background-color: #fff; padding: 1.5rem 1rem; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        @media (min-width: 768px) {
+            .chart-container { height: 350px; }
+            .timeline-chart-container { height: 420px; }
+        }
+        .sticky-header {
+            position: sticky; top: 0; z-index: 50; background-color: rgba(10, 36, 99, 0.97); backdrop-filter: blur(8px);
+        }
+        .german-term {
+            font-family: 'Georgia', serif; color: #F4A261; font-style: italic;
+        }
+        
+        .section-title, .phase-main-title, .territory-strip-title { 
+            color: #0A2463; 
+            border-bottom: 2px solid #F4A261; 
+            padding-bottom: 0.5rem; 
+            font-size: 1.75rem; 
+            cursor: pointer;
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            font-weight: bold;
+        }
+        .phase-main-title { font-size: 1.5rem; } 
+        .territory-strip-title { 
+            font-size: 1.2rem; 
+            background-color: #e0f2fe; 
+            padding: 0.75rem 1rem; 
+            border-bottom: 1px solid #A5D8DD;
+            color: #0A2463; 
+        }
+        .territory-strip-title.open {
+             border-bottom-color: transparent;
+        }
+
+
+        .toggle-icon::before { 
+            content: '▼'; display: inline-block; transition: transform 0.3s; margin-left: 0.5rem; font-size: 0.8em;
+        }
+        .open .toggle-icon::before { 
+            transform: rotate(180deg); 
+        }
+        .event-title .toggle-icon::before { content: '▸'; }
+        .event-title.open .toggle-icon::before { transform: rotate(90deg); }
+
+
+        .axis-label {
+            display: inline-block; padding: 0.1rem 0.5rem; font-size: 0.65rem; font-weight: 500;
+            border-radius: 0.5rem; margin-right: 0.3rem; margin-bottom: 0.2rem; color: white; line-height: 1.2; 
+        }
+        .axis-label.geo { background-color: #3E8989; } 
+        .axis-label.anti { background-color: #F4A261; } 
+        .axis-label.mech { background-color: #0A2463; } 
+
+        .event-item {
+            margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid #A5D8DD; 
+        }
+        .event-item:first-child { margin-top: 0; padding-top: 0; border-top: none; }
+
+        .event-title-container { margin-bottom: 0.25rem; } 
+        .event-title { 
+            font-size: 1.25rem; 
+            font-weight: 700; color: #3E8989; margin-bottom: 0.1rem; cursor: pointer;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .event-date { font-size: 0.9rem; font-weight: bold; color: #555; margin-bottom: 0.5rem; } /* Made date more prominent */
+        
+        .content-block { 
+            margin-bottom: 0.25rem; /* Reduced */
+            padding: 0.25rem 0.5rem; 
+            border-radius: 6px;
+            background-color: #f8f9fa; 
+        }
+        .content-block p.context-text { 
+            text-align: justify; 
+            line-height: 1.5; /* Slightly reduced line-height */
+            font-size: 0.9rem; 
+            margin-bottom: 0.25rem; 
+            color: #333;
+            text-indent: 0 !important; 
+        }
+        
+        .document-quote { 
+            font-style: italic; color: #2c3e50; 
+            padding: 0.5rem; 
+            padding-right: 1rem; 
+            border-right: 3px solid #3E8989; 
+            background-color: #ffffff; 
+            margin-top: 0.25rem; 
+            margin-bottom: 0.25rem; 
+            white-space: pre-wrap; 
+            text-align: justify; 
+            line-height: 1.5; /* Slightly reduced line-height */
+            text-indent: 0 !important; 
+        }
+        .document-quote p { 
+            text-indent: 0 !important;
+            margin-bottom: 0.1rem; /* Reduced space between paragraphs in a multi-paragraph quote */
+        }
+        .document-quote p:last-child:not(.document-source-notes) {
+             margin-bottom: 0;
+        }
+        .document-quote strong { color: #0A2463; font-weight: bold; } 
+
+        .document-quote .document-source-notes { 
+            font-style: normal;
+            font-size: 0.7rem; /* Slightly smaller source notes */
+            color: #4a5568; 
+            text-align: left; 
+            margin-top: 0.25rem; /* Reduced */
+            display: block; 
+            text-indent: 0 !important;
+        }
+        .content-block p.interpretation-text { 
+             margin-top: 0.25rem; 
+             font-size: 0.9rem; 
+             color: #333;
+             line-height: 1.5; /* Slightly reduced line-height */
+             text-align: justify;
+             text-indent: 0 !important;
+        }
+       
+        .territory-strip-content {
+            padding: 1rem;
+            font-size: 0.9rem;
+            background-color: #f0f7f8; 
+        }
+
+        .stat-box {
+            background-color: #e0f2fe; color: #0A2463; padding: 0.75rem; border-radius: 4px; margin-bottom: 0.5rem;
+        }
+        .stat-box .number { font-size: 1.5rem; font-weight: bold; }
+        .stat-box .label { font-size: 0.85rem; }
+
+        .timeline-container-wrapper {
+            width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; padding-bottom: 10px; 
+            border: 1px solid #A5D8DD; border-radius: 8px; background-color: #fafdff; 
+        }
+        .timeline { display: flex; flex-direction: row; min-width: max-content; }
+        .timeline-event {
+            flex: 0 0 auto; padding: 0.75rem 1rem; margin: 0.5rem 0.25rem; background-color: #A5D8DD; 
+            color: #0A2463; border-radius: 6px; text-align: center; cursor: pointer;
+            transition: background-color 0.3s, color 0.3s, border-color 0.3s, transform 0.2s;
+            border: 2px solid transparent; white-space: nowrap; 
+        }
+        .timeline-event:hover { background-color: #3E8989; color: white; transform: translateY(-2px); }
+        .timeline-event.active {
+            background-color: #0A2463; color: white; border-color: #F4A261; 
+            transform: translateY(-2px); box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        .timeline-event h4 { font-weight: bold; font-size: 0.85rem; margin-bottom: 0.1rem;} 
+        .timeline-event p { font-size: 0.7rem; } 
+
+        .dynamic-content-area > div {
+            background-color: #fdfdff; padding: 1.25rem; border-radius: 6px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.07); margin-top: 1rem; border-top: 3px solid #3E8989;
+        }
+        .dynamic-content-area h4 {
+            color: #0A2463; font-weight: bold; font-size: 1.1rem; margin-bottom: 0.75rem;
+            border-bottom: 2px solid #A5D8DD; padding-bottom: 0.5rem;
+        }
+        .dynamic-content-area p, .dynamic-content-area ul { font-size: 0.95rem; line-height: 1.6; }
+        .dynamic-content-area ul { list-style-position: inside; padding-right: 0.5rem; }
+        .dynamic-content-area li { margin-bottom: 0.25rem; }
+        .population-highlight { font-size: 1.25rem; font-weight: bold; color: #F4A261; }
+        
+        .collapsible-content { display: none; }
+        .collapsible-content.open { display: block; }
+
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-900">
+
+    <header class="sticky-header text-white py-5 shadow-xl">
+        <div class="container mx-auto text-center px-4">
+            <h1 class="text-3xl sm:text-4xl md:text-5xl font-bold hebrew-title">מהגירה להריגה – "פתרונות" הנאצים ל"שאלה היהודית"</h1>
+        </div>
+    </header>
+
+    <main class="container mx-auto p-4 md:p-8">
+
+        <section id="introduction-main-card" class="mb-12 card p-0">
+            <h2 class="section-title p-6 md:p-8 toggle-trigger">
+                <span>מבוא</span>
+                <span class="toggle-icon"></span>
+            </h2>
+            <div class="collapsible-content px-6 md:px-8 pb-6 md:pb-8">
+                <div class="text-gray-700 leading-relaxed space-y-4 text-justify">
+                    <p>גישת הנאצים ל"פתרון השאלה היהודית" ודרכי יישומה לא התבססו על תוכנית סדורה וקבועה מראש, אלא התגבשו כתהליך דינמי ומסלים. תהליך זה הציג קווי דמיון להתפתחות מדיניות הכיבוש הנאצית, שבמסגרתה ההשתלטות על עמים וארצות התפתחה בשלבים וכל הצלחה תוקפנית חיזקה את ביטחונם והגבירה את תעוזתם אל מול עולם פייסן. כך, גם בגישתם ל"שאלה היהודית" ניתן להבחין בשלבי תכנון וביצוע נפרדים, המשקפים הסלמה הדרגתית וקטלנית, הניזונה אף היא משתיקת העולם.</p>
+                    <p>בתחילה, בעוד הנאצים מגלים רגישות מסוימת לתגובות העולם החיצוני, התבטא "הפתרון" בעיקר בצעדים דרסטיים וקשים כמו כפיית הגירה וגירוש, ומדיניות ההשמדה הכוללת טרם התגבשה סופית. אולם, משנוכחו הנאצים כי מעשיהם אינם נתקלים בהתנגדות משמעותית ושתיקת העולם נמשכת, וכי "פתרונותיהם" הקיימים אינם מספקים מענה ל"בעיה" הגדלה, הם החלו להקצין את דרכי פעולתם, עד שהגיעו לשלב ההשמדה המתוכננת והכוללת – "הפתרון הסופי".</p>
+                    <p>עם זאת, כפי שיפורט, הטיפול ב"שאלה היהודית" כלל גם מאפיינים ייחודיים והבחנות חשובות ביחס למדיניות הכיבוש.</p>
+                    <p>מדיניות הכיבוש הנאצית ניזונה מאידיאולוגיה תוקפנית, שראתה באיחוד העם הגרמני ב"גרמניה הגדולה" ובהרחבת "מרחב המחיה" שלו יעדים מרכזיים ותנאי חיוני להמשך קיומו של "הגזע העליון". הדרך להשגת יעדים אלו הייתה ברורה יחסית – התפשטות טריטוריאלית, גם במחיר מלחמה. התנהלותם של הנאצים בזירה זו דמתה למטפס על סולם, הבוחן לאחר כל שלב את יציבותו אל מול תגובות העולם; אם נמצא השלב יציב, והתגובה הבינלאומית אפשרה זאת, המשיך לטפס אל השלב הבא, הנועז מקודמו. כך התבטאה מדיניותם: לאחר שכניסת הצבא לאזור הריין המפורז עברה ללא תגובה משמעותית מצד מעצמות המערב, הופנה המבט הנאצי לעבר אוסטריה. שתיקת העולם, ובפרט מדיניות הפיוס המערבית, נתפסה על ידם כביטוי לחולשה וכעידוד להמשיך במדיניות ההתפשטות. עם סיפוחה של אוסטריה, הועלתה הדרישה לחבל הסודטים בצ'כוסלובקיה, ומשזו נענתה בהסכם מינכן, נכבשה צ'כוסלובקיה כולה כעבור זמן קצר, ולאחר מכן אזור ממל. כל "הצלחה" תוקפנית כזו, שהתאפשרה לנוכח חולשת העולם, סללה את הדרך לצעד הבא, ובסופו של דבר, להכנות לקראת מלחמה כוללת.</p>
+                    <p>תהליך ההסלמה בטיפול ב"שאלה היהודית" אמנם חלק מאפיינים עם מדיניות הכיבוש, כגון הדינמיות, ההשפעה של שתיקת העולם וההתקדמות בשלבים המזכירה "טיפוס בסולם", אך הוא גם נבדל ממנה בשני היבטים מהותיים והיה בעל השלכות הרסניות לאין שיעור. ראשית, בניגוד למדיניות הכיבוש, שבה היעדים (התפשטות) והאמצעים (כוח צבאי) היו מוגדרים יחסית, "הפתרון לשאלה היהודית" לא היה ברור וסדור מראש. התפתחות המדיניות כלפי היהודים התאפיינה במידה רבה ב"ניסוי וטעייה", כאשר הנאצים נאלצו "לגשש" ולנסות מגוון "פתרונות", שלעיתים אף התבררו כבעייתיים מנקודת מבטם או כבלתי יעילים. כל "פתרון" שיושם עמד למבחן בשטח, והצלחתו – יחד עם שתיקתו הרועמת של העולם – חיזקה את ביטחון המשטר הנאצי ביכולתו להמשיך ולהקצין את צעדיו.</p>
+                    <p>"שנית, ומבדיל נוסף ממדיניות הכיבוש, היה האופן שבו היקף "השאלה היהודית" (כפי שנתפסה על ידי הנאצים) ותנאי המלחמה המתפתחים הכתיבו את הצורך בשינוי "הפתרון". עם התרחבות הכיבושים הנאציים וכניסתם של מאות אלפי ומיליוני יהודים נוספים תחת שלטונם הישיר, היקף "הבעיה" הלך ותפח לממדים חדשים. גידול זה במספר היהודים תחת שליטתם, יותר מכל גורם אחר, היווה את הדחף המכריע ביותר של הנאצים לעבר פתרונות של רצח המוני. כתוצאה מכך, מגוון "פתרונות" שנבחנו או יושמו בשלבים אלו – החל מנישול כלכלי והדרה מהחיים הציבוריים, דרך המשך עידוד הגירה כפויה וגירושים המוניים, וכלה בתוכניות טריטוריאליות כמו "שמורת היהודים" באזור לובלין (תוכנית ניסקו) או הרעיון ליישבם במדגסקר – התבררו כולם כבלתי מספקים בעיני הנאצים להתמודדות עם "הבעיה" בהיקפה הגדל והולך. התחוור להם כי נדרשים פתרונות "אפקטיביים" יותר.</p>
+                    <p>הכיבושים עצמם לא רק החריפו את ה"בעיה" בעיני הנאצים, אלא גם פתחו בפניהם אפשרויות לוגיסטיות וטריטוריאליות חדשות לבחינת "פתרונות" אלו, בעיקר במזרח אירופה, הרחק מעין הציבור. לכן, כאשר נוכחו הנאצים לדעת כי מעשיהם אינם נתקלים בהתנגדות משמעותית מצד הקהילה הבינלאומית, ובמקביל, כאשר הנסיבות – ובכללן התרחבות ה"בעיה" לממדים חסרי תקדים והאפשרויות החדשות שנפתחו בעקבות הכיבושים – אפשרו זאת בעיניהם, הם עברו לשלב ההשמדה המתוכננת והכוללת – "הפתרון הסופי".</p>
+                    <p>"אפילו הרציחות ההמוניות באמצעות ירי, שהפכו נפוצות יותר ויותר במזרח, החלו להיתפס על ידי הנהגת הרייך כשיטה בעייתית – הן בשל "חוסר יעילותן" לטיפול במיליונים, והן בשל ההשפעות הפסיכולוגיות הקשות על המבצעים עצמם, מה שנתפס כבלתי הולם לחיילי "הגזע העליון". תחושת חוסר היעילות של אמצעים אלה, יחד עם שיקולים "פרגמטיים" מעוותים אלו, הצורך להתמודד עם ה"בעיה" בהיקפה העצום, והתעוזה הגוברת של המשטר הנאצי שכבר חש פחות מרוסן על ידי תגובות העולם, דחפה ליישומם של "פתרונות" רדיקליים, אכזריים ובלתי אנושיים יותר ויותר. ההסלמה הגיעה לשיאה בהחלטה על "הפתרון הסופי" – השמדתם השיטתית והטוטאלית של מיליוני יהודים, שבוצעה במגוון דרכים, ובמרכזן הקמת מחנות השמדה ייעודיים עם תאי גזים ומשרפות.</p>
+                    <p>מסמך זה יעקוב אחר התפתחות קטלנית זו, תוך בחינת יחסי הגומלין ההדוקים בין ההתרחבות הגיאוגרפית של שטחי הכיבוש הנאציים, הגידול במספר היהודים תחת שליטתם, וההקצנה במדיניות כלפיהם – מהגירה כפויה ועד לרצח עם שיטתי.</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="core-argument-timeline" class="mb-12 card p-6 md:p-8">
+            <h2 class="text-2xl md:text-3xl font-semibold mb-4 hebrew-title" style="color: #0A2463;">הדינמיקה של ההסלמה: ציר זמן של הרדיפה</h2>
+            <p class="text-gray-700 leading-relaxed mb-6">
+                ההתפשטות הטריטוריאלית הנאצית הגדילה באופן מתמיד את מספר היהודים תחת שליטתם (כפי שנתפס על ידם). גידול זה, יחד עם תחושת הביטחון העצמי הגוברת ואפשרויות "פתרון" חדשות שנפתחו, הזינו מעגל הסלמה. המנגנון הנאצי התאים את עצמו לכל שלב, וה"פתרון" ל"שאלה היהודית" הפך רדיקלי יותר ויותר.
+            </p>
+            <p class="text-sm text-gray-600 mb-6">לחץ על אירוע בציר הזמן כדי לראות את הנתונים וההקשרים הרלוונטיים לאותה תקופה.</p>
+
+            <div class="timeline-chart-container mb-8">
+                <canvas id="jewishPopulationChart"></canvas>
+            </div>
+            
+            <div class="timeline-container-wrapper mb-8">
+                <div class="timeline" id="eventTimeline">
+                </div>
+            </div>
+
+            <div class="grid md:grid-cols-2 lg:grid-cols-2 gap-6 dynamic-content-area">
+                <div id="currentGeographicFocusCard">
+                    <h4>מוקד גיאוגרפי (<span class="axis-label geo">ציר ההתפשטות הנאצית</span>):</h4>
+                    <p id="currentGeographicFocusDisplay" class="text-gray-700">-</p>
+                </div>
+                <div id="currentPerceivedPopulationCard" class="bg-amber-50 border-amber-200">
+                    <h4 style="color: #c85a15;">היקף "השאלה היהודית" (תפיסה נאצית):</h4>
+                    <p id="currentPerceivedPopulationDisplay" class="text-gray-700 population-highlight">-</p>
+                </div>
+                <div id="currentSolutionCard" class="lg:col-span-2">
+                    <h4>סוג ה"פתרון" הנשקל/מיושם (<span class="axis-label anti">אנטישמיות</span>):</h4>
+                    <p id="currentSolutionDisplay" class="text-gray-700">-</p>
+                     <div id="currentSolutionDocuments" class="mt-2 text-xs"></div>
+                </div>
+                <div id="currentMechanismCard" class="lg:col-span-2">
+                    <h4>התפתחות המנגנון הנאצי (<span class="axis-label mech">התפתחות המנגנון</span>):</h4>
+                    <p id="naziMechanismDisplay" class="text-gray-700">-</p>
+                    <div id="currentMechanismDocuments" class="mt-2 text-xs"></div>
+                </div>
+            </div>
+        </section>
+
+        <section id="phases-of-the-solution" class="mb-12">
+            <h2 class="text-2xl md:text-3xl font-semibold mb-8 text-center hebrew-title" style="color: #0A2463;">שלבי התפתחות "הפתרון הסופי"</h2>
+            <div class="space-y-6"> 
+                
+                <div class="territory-strip" id="territory-strip-germany">
+                    <h4 class="territory-strip-title toggle-trigger">
+                        <span>גרמניה הנאצית</span>
+                        <span class="toggle-icon"></span>
+                    </h4>
+                    <div class="collapsible-content territory-strip-content">
+                        <div class="event-item">
+                            <div class="event-title-container">
+                                <h4 class="event-title toggle-trigger">
+                                    <span>עליית היטלר לשלטון <span class="axis-label anti">אנטישמיות</span></span>
+                                    <span class="toggle-icon"></span>
+                                </h4>
+                                <p class="event-date">30 בינואר 1933</p>
+                            </div>
+                            <div class="collapsible-content">
+                                <div class="content-block">
+                                    <p class="context-text text-sm text-gray-700">מתוך נאום הפתיחה של התובע גדעון האוזנר במשפט אייכמן:</p>
+                                    <blockquote class="document-quote">
+                                        <p>ביום 30 בינואר 1933 הסגיר הינדנבורג ((Hindenburg את שלטון גרמניה בידי היטלר. הידע אותו ישיש את אשר עולל אז לעמו ולעולם? אחרי שהשביע את חברי הממשלה החדשה, אמר להם׃ "ועתה רבותי, בעזרת האל, קדימה!" ואכן צעדה גרמניה קדימה, לקראת המלחמה, הזוועות והחרפה.</p>
+                                        <p class="document-source-notes">מקור: משרד המשפטים, רשומות משפט אייכמן, פרוטוקול המשפט, כרך א', ישיבות 6-8, עמ' 63</p>
+                                    </blockquote>
+                                    <p class="context-text text-sm text-gray-700 interpretation-text">(כאן תוכל להוסיף פרשנות או קישור לשלב הבא)</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="phase-card card p-0" id="phase-1">
+                    <h3 class="phase-main-title p-6 toggle-trigger">
+                        <span>שלב 1: נישול, הדרה וגלי הגירה</span>
+                        <span class="toggle-icon"></span>
+                    </h3>
+                    <div class="collapsible-content px-6 pb-6">
+                         <div class="event-item">
+                            <div class="event-title-container">
+                                <h4 class="event-title toggle-trigger">
+                                    <span>Placeholder: חוקי נירנברג</span>
+                                    <span class="toggle-icon"></span>
+                                </h4>
+                                <p class="event-date">1935</p>
+                            </div>
+                            <div class="collapsible-content"> (Placeholder) </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="territory-strip" id="territory-strip-austria">
+                    <h4 class="territory-strip-title toggle-trigger">
+                        <span>אוסטריה</span>
+                        <span class="toggle-icon"></span>
+                    </h4>
+                    <div class="collapsible-content territory-strip-content">
+                        <div class="event-item">
+                            <div class="event-title-container">
+                                <h4 class="event-title toggle-trigger">
+                                    <span>התזכיר של הוסבאך <span class="axis-label geo">ציר ההתפשטות הנאצית</span></span>
+                                    <span class="toggle-icon"></span>
+                                </h4>
+                                <p class="event-date">5 בנובמבר 1937</p>
+                            </div>
+                            <div class="collapsible-content">
+                                <div class="content-block">
+                                    <p class="context-text text-sm text-gray-700">כחלק מההכנות למימוש שאיפות ההתפשטות הנאציות, ובפרט התוכניות לסיפוח אוסטריה וצ'כוסלובקיה, מהווה "התזכיר של הוסבאך" מנובמבר 1937 מסמך מפתח. רישום דברי היטלר בישיבה זו (על ידי מזכירו הצבאי של היטלר אוברסט פרידריך הוסבאך) חושף בבהירות את יעדיו האסטרטגיים לשנים הקרובות, כפי שהוצגו בפני הדרג הצבאי והמדיני הבכיר ביותר.</p>
+                                    <p class="context-text text-sm text-gray-700">מתוך ספרו של פרופ' ישראל גוטמן "טוטליטריות ושואה":</p>
+                                    <blockquote class="document-quote">
+                                        <p><strong>מטרתה של גרמניה להשיג מרחב מחיה. אולם תנאי מוקדם לכך הוא איחוד האומה הגרמנית במדינה גדולה וחזקה.</strong> בנובמבר 1937 כינס היטלר ישיבה בנוכחות שרי המלחמה והחוץ וראשי הצבא, ובה פורטו מטרותיה של מדיניות החוץ לשנים הבאות. רישום הנאמר ("התזכיר של הוסבאך" על שם שלישו של היטלר) חשף את העומד להתרחש. היטלר קבע כי מטרתה של גרמניה להשיג מרחב מחיה. אולם תנאי מוקדם לכך הוא איחוד האומה הגרמנית במדינה גדולה וחזקה ולשם כך יש בכוונתו לספח את צ'כוסלובקיה ואוסטריה. באמצעות סיפוחן יצטרפו לגרמניה מיליוני גרמנים ויוענקו לה גבולות נוחים יותר. בהמשך ניתן יהיה להתרחב מזרחה. אולם בדרך להשגת המטרה ניצבות לה כמכשול שתי מדינות החדורות בשנאה כלפיה, בריטניה וצרפת. כדי להתגבר עליו יש להביא בחשבון מלחמה עמן. ההחלטה לצאת למלחמה, הודיע היטלר, תימסר בעתיד הקרוב, ולא יאוחר מן השנים 1943-1945.</p>
+                                        <p>שר המלחמה (בלומברג) ושר החוץ (נויראט), שכיהנו כאנשים מקצועיים בממשלתו מאז 1933 וחלקו על דעתו, סולקו; היטלר נטל לידיו את תפקיד שר המלחמה, ואילו ריבנטרופ קיבל לידיו את משרד החוץ, כך גם הועברו מתפקידם הרמטכ"ל פריטש ושר הכלכלה שאכט, ששאפו למדיניות חוץ מתונה יותר. הדרך הייתה פנויה למהלך הבא.</p>
+                                        <p class="document-source-notes">מקור: ישראל גוטמן, טוטליטריות ושואה, עמ' 145.</p>
+                                    </blockquote>
+                                     <p class="context-text text-sm text-gray-700 interpretation-text">תזכיר הוסבאך, על אף שאינו עוסק ישירות ב"שאלה היהודית", חושף את תוכניות ההתפשטות האגרסיביות של היטלר, שהיוו תנאי מוקדם להרחבת השליטה הנאצית על אוכלוסיות יהודיות נוספות ולהסלמה בצעדים נגדם.</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="event-item">
+                            <div class="event-title-container">
+                                <h4 class="event-title toggle-trigger">
+                                    <span>"האנשלוס" – גרמניה מספחת את אוסטריה <span class="axis-label geo">ציר ההתפשטות הנאצית</span> <span class="axis-label mech">התפתחות המנגנון</span></span>
+                                    <span class="toggle-icon"></span>
+                                </h4>
+                                <p class="event-date">12-13 במרץ 1938</p>
+                            </div>
+                            <div class="collapsible-content">
+                                <div class="content-block">
+                                     <p class="context-text text-sm text-gray-700 text-justify">בהתאם לכוונות שהותוו ב"תזכיר של הוסבאך", ולאחר שהדרך הפוליטית הפנימית בגרמניה "נוקתה" מהמתנגדים למדיניות חוץ תוקפנית, המהלך הבא של היטלר כוון כלפי אוסטריה. סיפוחה של ארץ מולדתו לרייך הגרמני, ה"אנשלוס", התבצע במרץ 1938, והיווה צעד משמעותי נוסף בדרך למימוש חזון "גרמניה הגדולה" והפרה בוטה של הסכמים בינלאומיים.</p>
+                                    <blockquote class="document-quote">
+                                        <p class="expert-quote-preamble">מתוך ספרו של פרופ' ישראל גוטמן "טוטליטריות ושואה":</p>
+<p>"אוסטריה הגרמנית חייבת לחזור לארץ-האם הגרמנית הגדולה", כתב היטלר בספרו. היה זה הרצון לאחד את כל הגרמנים ברייך אחד, תוך התנערות מאיסורי חוזה ורסאי, ולא פחות מכך: שאיפתו של היטלר לאחד את ארץ מולדתו עם הארץ שבה שלט. באוסטריה פעלה מזה זמן תנועה נאצית מקומית ששאפה להגיע לשלטון ולהתאחד עם גרמניה, אולם ניסיון ההשתלטות הנאצי הראשון על אוסטריה ב-1934 נכשל. היטלר לא התערב אז, בין היתר בגלל התנגדותו של מוסוליני. כדי להרגיע את האיטלקים ואת האוסטרים חתם היטלר ב-1936 על הסכם עם אוסטריה ובו התחייב לכבד את ריבונותה.</p>
+<p>אולם לאור הצלחותיו בשנים 1936-1937, התחזק ביטחונו של היטלר. על רקע מהומות שחוללו הנאצים האוסטרים הוא גרם בעזרת שורה של איומים צבאיים להתפטרות ראש ממשלת אוסטריה שושניג. מנהיג הנאצים האוסטרים זייס-אינקווארט היה לראש ממשלה, ועל פי הוראות היטלר הזמין את הצבא הגרמני לסייע בהשלטת הסדר באוסטריה. ב-12 במרס 1938 נכנסו כוחות גרמניה לאוסטריה והתקבלו בתשואות על ידי ההמונים הנלהבים. למחרת נחקק חוק ה"אנשלוס" (סיפוח) ולפיו אוסטריה לא הייתה עוד מדינה כי אם מחוז מזרחי ברייך הגרמני. כך הפר היטלר את חוזה ורסאי, כמו גם את ההסכם שנחתם עם אוסטריה וסיפח ארץ ריבונית, כל זאת, לכאורה ללא שימוש בכוח צבאי. דפוס זה של חתימת הסכם והפרתו תוך איומים יחזור בהמשך.</p>
+<p>מצד בריטניה, צרפת ו"חבר הלאומים" לא נשמעה כל הסתייגות של ממש למאורע זה למרות הפרת חוזה ורסאי. ומה באשר לאיטליה? איטליה התנגדה בעבר לסיפוח, שכלל שטחים שתבעה לעצמה, פגע בה כלכלית, והוריד מיוקרת מוסוליני. למרות זאת, ועל אף (או אולי מפני) שהסיפוח הביא צבא גרמני אל גבול איטליה, מוסוליני לא הגיב עליו ולא ערער את בריתו עם היטלר. עמדתו של מוסוליני כלפי הסיפוח לא הייתה מובנת מאליה. היטלר שיגר אליו שליח מיוחד, הנסיך פיליפ מהסן, וזה דיווח בטלפון:<br/>
+הנסיך: "הדוצ'ה קיבל את כל העניין בצורה ידידותית מאוד... מוסוליני אמר כי אוסטריה אינה חשובה לו."<br/>
+היטלר: "אז אמור למוסוליני, כי לעולם לא אשכחנו על כך!..."</p>
+                                        <p class="document-source-notes">מקור: ישראל גוטמן, טוטליטריות ושואה, עמ' 145-146.</p>
+                                    </blockquote>
+                                     <p class="context-text text-sm text-gray-700 text-justify interpretation-text">האנשלוס לא רק הרחיב את הרייך הגרמני אלא גם הכניס כ-192,000 יהודים נוספים תחת שלטון נאצי. הצלחת הסיפוח, שהתקבלה כמעט ללא התנגדות בינלאומית, חיזקה את ביטחונו של היטלר והאיצה את יישום המדיניות האנטי-יהודית באוסטריה, לעיתים אף באופן ברוטלי יותר מאשר בגרמניה עצמה באותה עת. וינה הפכה למעבדה ל"פתרונות" חדשים, ובמרכזם "הלשכה המרכזית להגירת יהודים" בניהולו של אייכמן.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="phase-card card p-0" id="phase-2-continued">
+                    <h3 class="phase-main-title p-6 toggle-trigger">
+                        <span>שלב 2 (המשך): הגירה בטרור וכפייה</span>
+                        <span class="toggle-icon"></span>
+                    </h3>
+                    <div class="collapsible-content px-6 pb-6">
+                        <div class="event-item">
+                            <div class="event-title-container">
+                                <h4 class="event-title toggle-trigger">
+                                    <span>2.1. יהודים מוכים ומושפלים ברחובות וינה <span class="axis-label anti">אנטישמיות</span></span>
+                                    <span class="toggle-icon"></span>
+                                </h4>
+                                <p class="event-date">מרץ 1938 ואילך</p>
+                            </div>
+                            <div class="collapsible-content">
+                                <div class="event-item">
+                                    <div class="event-title-container">
+                                        <h5 class="event-title text-base toggle-trigger"> 
+                                            <span>2.1.1. נפילתה של אוסטריה שלל בידי האלימות הגסה</span>
+                                            <span class="toggle-icon"></span>
+                                        </h5>
+                                    </div>
+                                    <div class="collapsible-content">
+                                        <div class="content-block">
+                                            <p class="context-text text-sm text-gray-700">את ההשפלה, האלימות הגסה וההתפרצות חסרת הרסן של שנאה כלפי יהודי וינה עם כניסת הנאצים, תיאר בעוצמה רבה הסופר האוסטרי היהודי הנודע, שטפן צוויג. עדותו, הנובעת מהבנה אינטימית של התקופה ומכאב עמוק על גורל בני עמו ואובדן עולמו, מובאת בספרו "העולם של אתמול":</p>
+                                            <blockquote class="document-quote">
+                                                <p>סבור הייתי כי חזיתי מה יקרה כשחלום השנאה של היטלר יתגשם, והוא יכבוש כמנצח את וינה, העיר שדחתה אותו בנעוריו בהיותו עני ונכשל. אך כמה מהוסס, כמה קטן, כמה עלוב התגלה דמיוני, וכל דמיון אנושי, לעומת אי-האנושיות שהתפרצה ב-13 במרס 1938, יום נפילתה של אוסטריה שלל בידי האלימות הגסה! עתה נשמטה המסכה.</p>
+                                                <p>לא זו בלבד ששדדו וגנבו, אלא קראו דרור לכל רגשי הנקם של יחידים. פרופסורים אולצו לשפשף בידיהם את הרחובות, יהודים אדוקים צחורי זקן נגררו לבית הכנסת ואולצו על ידי נערים מריעים לכרוע ברך ולצעוק במקהלה "הייל היטלר". עוברי אורח נתפסו ברחוב כארנבות ונלקחו לנקות את המחראות בקסרקטינים של האס-אה. כל מה שהזה דמיון השנאה החולני והמזוהם בלילות מופקרים רבים השתולל עתה לאור יום. פריצה אל דירות ותלישת עגילים מאוזניהן של נשים רועדות, מעשים כאלה כבר קרו כשנבזזו ערים לפני מאות שנים במלחמות ימי הביניים.</p>
+                                                <p>חדשה הייתה התאווה חסרת הבושה לענות אנשים בפומבי, להביא עליהם ייסורי נפש, להשפילם בהמצאות מרושעות. כל המעשים האלה נרשמו לא על ידי יחיד, אלא על ידי אלפים שהתנסו בזה.</p>
+                                                <p>ובבוא ימים רגועים יותר, לא בזמן שלנו העייף מבחינה מוסרית, יקראו אנשים באימה וברטט מה עולל בעיר תרבותית זו במאה העשרים אדם אחד טרוף שנאה, כי זה היה ניצחונו השטני של היטלר בתוך ניצחונותיו הפוליטיים והצבאיים: עלה בידי האיש הזה להקהות כל חוש של חוקיות על ידי הפרזות בלתי פוסקות. לפני "משטר חדש" זה, היה רצח של אדם יחיד, ללא דין וסיבה, מזעזע את כל העולם. הדעת לא סבלה עינויים במאה העשרים, והפקעת רכוש עדיין נקראה במפורש שוד וגנבה. ואילו עתה... לאחר עינויים-עד-מוות בתאים של האס-אה ומאחורי גדרות התיל, מה ערכו של עוול יחיד, מה ערכם של ייסורים ארציים?</p>
+                                                <p class="document-source-notes">מקור: שטפן צוויג, העולם של אתמול, עמ' 318-319</p>
+                                            </blockquote>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="event-item">
+                                    <div class="event-title-container">
+                                        <h5 class="event-title text-base toggle-trigger">
+                                            <span>2.1.2. אם מוצא הדבר חן בעיני הא-ל – אני עבדו</span>
+                                            <span class="toggle-icon"></span>
+                                        </h5>
+                                    </div>
+                                    <div class="collapsible-content">
+                                        <div class="content-block">
+                                            <p class="context-text text-sm text-gray-700">עדותו של מוריץ פליימן במשפט אייכמן מוסיפה נדבך חשוב לתיאור הטרור וההשפלות שחוו יהודי וינה עם האנשלוס. דבריו מתארים, בין היתר, את ההשפלה הפומבית הידועה של כפיית ניקוי הרחובות, ובתוכה רגע בלתי נשכח של עמידה רוחנית, כפי שהתבטאה בתשובתו של הרב ד"ר טגליכט למשפילו הנאצי:</p>
+                                            <blockquote class="document-quote">
+                                                <p>...עם כניסת הנאצים לאוסטריה, שגרמה להתלהבות עצומה של אוכלוסיית וינה, מיד נסגרו כל המוסדות היהודיים והועברו לפיקוח הגסטאפו והס"ס. המנהיגים היהודיים נעצרו מיד ...</p>
+                                                <p><strong>ש.</strong> מה קרה לשירותים היהודיים מיד לאחר סגירת המשרדים האלה?</p>
+                                                <p><strong>ת.</strong> הם נסגרו ולא הייתה להם אפשרות להיפגש אלא באופן סודי. אפילו משרד הסעד של הקהילה, נמנעה ממנו כל פעולה. הם לא יכלו לתת לעניים ביותר כספי עזרה ראשונה, כדי שיוכלו להתקיים.</p>
+                                                <p>[...]</p>
+                                                <p><strong>העד פליישמן</strong>... כמה ימים אחרי... צריך הייתי לקיים שיחה דחופה עם מנהל המשרד אמיל אנגל, שגר בבניין הקהילה. באתי לשם וניצבו שם שני אנשי כוחות הכוננות של הס"ס עם קסדות פלדה ורובים. גובהם – ביניהם לא היה מצוי איש שהיה נמוך מ-1.78 מטר, ידיהם היו חזקות במיוחד. הגעתי לכניסה. אשת השוער, גברת סרקוביץ", רצתה למנוע בעדי, אולם אחד הזקיפים הבחין בי וקרא לי להיכנס.</p>
+                                                <p>מסרו לידי דלי מים רותחים ומטלית וציוו עלי לשפשף את המדרכות. שכבתי על הבטן והתחלתי לשפשף את המדרכה. נתברר שהדלי היה מלא בכמחציתו בחומצה מאכל, כך שידי התנפחו במהרה. בעת ששכבתי לשפשף את המדרכה, הוצא החוצה על ידי הזקיף של כוחות הכוננות של הס"ס הרב הראשי ד"ר טגליכט, שהיה אז בן 70, והוא צוּוה כמוני לשפשף את המדרכות. כדי שירגיש את מלוא ההשפלה וחוסר המידה האנושית הוא הוצא בעודו בגלימתו, כאשר הוא עטוף בטליתו. בשוכנו על הארץ שאל אותו הזקיף, במלוא הציניות והסדיזם׃ כיצד מוצא הדבר חן בעיניו? והוא ענה׃ אם מוצא הדבר חן בעיני האל – אני עבדו.</p>
+                                                <p>...אחרי תקרית זו, ד"ר לוונהרץ כבר היה משוחרר, בוצעה ההתנקשות הראשונה בבית הכנסת ברחוב טמפל.</p>
+                                                <p><strong>ש.</strong> מתי בערך זה היה?</p>
+                                                <p><strong>ת.</strong> זה היה בערך במאי. באותו זמן כבר התקיימו סריקות פתע. הסריקה בה אני נזכר אישית ב-Taubergasse, בה קובצו הגברים ככלבים והובאו במשאיות למחנה בדכאו.</p>
+                                                <p>בסוף מאי החלו להגיע הודעות פטירה. כך קיבלה ידידתנו, אשת יצרן הפפריקה קוטאני בווינה שהובא לדכאו, הודעה כי בעלה אינו בחיים, וכי עליה לשלוח 10 מרקים דמי כד האפר... הודעה שנייה הגיעה אל חברי לענף, קרבר, שהיה בין מנהלי הפירמה קליין-קרבר בווינה, ב-Kaiserstrasse. הם הובלו ואור עצום הואר בעיניהם, והם הוכרחו להסתכל לעברו. כאשר ניסה להביט הצידה נדקר למוות על ידי איש ס"ס. אשתו הראתה לי את ההודעה על כך.</p>
+                                                <p>[...]</p>
+                                                <p><strong>ש.</strong> מה קרה לך בתחילת ספטמבר 1938?</p>
+                                                <p><strong>ת.</strong> נכנסתי בתחילת ספטמבר לבית החולים של הקהילה, כדי לעבור ניתוח שבר בשני הצדדים, כי לא רציתי להגר עם שבר. שכבתי שם יחד עם ד"ר פלשקס שסבל מסכרת קשה ועם ד"ר אוסקר גרינבוים, שגם הוא נכנס לבית החולים כדי לעבור ניתוח שבר. היה ניסיון איפול ראשון שהיה מכוון להתנפל על אנשים באפלה, לזרקם מהחשמלית וכו'. כל הלילה הובאו לבית החולים פצועים. לא היה עוד מקום באולמות ובמסדרונות, והיה צורך להשכיב את האנשים עם אברים מרוסקים בגינה.</p>
+                                                <p class="document-source-notes">מקור: משרד המשפטים, רשומות משפט אייכמן, פרוטוקול המשפט, כרך א'. עדות מוריץ פליישמן, ישיבה 16, עמ' 216</p>
+                                            </blockquote>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="event-item">
+                                    <div class="event-title-container">
+                                        <h5 class="event-title text-base toggle-trigger">
+                                            <span>2.2. לטהר את וינה ואת אוסטריה כולה מיהודיה <span class="axis-label mech">התפתחות המנגנון</span> <span class="axis-label anti">אנטישמיות</span></span>
+                                            <span class="toggle-icon"></span>
+                                        </h5>
+                                    </div>
+                                    <div class="collapsible-content">
+                                        <div class="content-block">
+                                            <p class="context-text text-sm text-gray-700">בהמשך עדותו מתאר מוריץ פליישמן את המפגש הראשון של נציגי הקהילה היהודית בווינה עם אדולף אייכמן, שמונה על ידי הנאצים "לפתור את השאלה היהודית באוסטריה פתרון מושלם". המפגש חשף את סמכותו, את שיטותיו, ואת משימתו הברורה: להפוך את וינה ואוסטריה כולה ל"יודנריין" (נקייה מיהודים):</p>
+                                            <blockquote class="document-quote">
+                                                <p><strong>העד פליישמן</strong> לקראת סוף מרץ קיבלנו הודעה כי על נציגי היהדות של וינה להופיע במלון "מטרופול" במשרדים הראשיים של הגסטאפו ...</p>
+                                                <p><strong>ש.</strong> עם מי נפגשתם שם?</p>
+                                                <p><strong>ת.</strong> הובלנו על ידי איש ס"ס שאמר לנו כי הוא מוביל אותנו אל אדולף אייכמן. נכנסנו... האיש לבש מדים וישב מאחורי שולחן גדול.</p>
+                                                <p><strong>ש.</strong> אתה זוכר מה היה טיב המדים של אייכמן?</p>
+                                                <p><strong>ת.</strong> מדי ס"ס שחורים... אייכמן ישב מאחורי שולחן גדול. עלינו היה לעמוד. הוא ביקש את שמותינו ותיאור חוג פעילותנו בחיים היהודיים. הציגו את עצמם אדולף ביהם והאדונים האחרים. כאשר שמע אייכמן את השם אדולף ביהם, הוא שאל: "האם אתה הוא אדולף ביהם, המוציא לאור של "תולדות הציונות"?" לתשובתו החיובית של אדולף ביהם ענה אייכמן: "מעניין מאוד, למדתי את היצירה על דיוקה. בעיקר עניינה אותי הפסקה ההיא בעמוד מסוים". והוא החל לצטט עמוד זה במלוא תוכנו בעל פה. החלפנו מבטים משתוממים. אז העיר אייכמן כמה הערות בעברית, ואמר: "אין להתפלא, אני מדבר עברית ויידיש על בוריין, כי אני יליד שרונה".</p>
+                                                <p>[...]</p>
+                                                <p><strong>העד פליישמן</strong> קודם לכן הוא הביא לידיעתנו את תוקף סמכותו. הוא נועד לנהל ולהנחות את כל העניינים היהודיים באוסטריה. שומה עליו לפתור את השאלה היהודית באוסטריה פתרון מושלם. והוא דורש ציות בלתי מופר ושיתוף פעולה ללא סייג ומילוי כל הוראותיו והנחיותיו. הוא אמר כי הוא מזהירנו לא לעשות נגד זה מאומה ולא לחבל, כי כוונתו הבלתי מעורערת היא לעשות את המוטל עליו בדרך הקצרה והיעילה ביותר. הוא ידע לעבור ולהתגבר על כל התנגדות, ויגיב בחריפות על כל משחק מחבואים והשתמטות... כאשר הלכנו, הוא חזר והזהיר אותנו כי ידע בכל הדרכים למצוא באופן מהיר ביותר את הפתרון בכל האמצעים.</p>
+                                                <p><strong>ש.</strong> אחרי הדברים מספרו של אדולף ביהם, מה קרה?</p>
+                                                <p><strong>ת.</strong> הוא העיר הערה, כי כמה שבועות לפני כן הופיע הכרך השני של אותו ספר "תולדות הציונות", והוא הצטער שטרם התפנה לעיין בו, כי הוא היה עסוק מאוד. אולם הוא יזדרז לתקן את המעוות בזמן הקצר ביותר.</p>
+                                                <p><strong>ש.</strong> ומה קרה לאחר מכן?</p>
+                                                <p><strong>ת.</strong> השפעת הפעילות של אייכמן הביאה לחרדה ורגש פחד ביהדות וינה. רגשות פחד הורגשו מיד, ואף אנו הרגשנו בכך מיד.</p>
+                                                <p><strong>ש.</strong> האם מישהו מתוך המשלחת או מישהו אחר נתמנה על ניהול העניינים היהודיים אחרי ישיבה זו?</p>
+                                                <p><strong>ת.</strong> אייכמן רצה כי אדולף ביהם יהיה אחראי מטעם הקהילה היהודית למילוי הוראותיו שלו. ביהם היה אז מעל לגיל 60 שנה, והיה חולני. ומאחר שכבר דיברנו על כך קודם, הוא ביקש לשחררו מכך. כך הסכמנו בינינו, כך הגענו לידי הסכמה עם ד"ר אלויס רוטנברג, שהיה הצעיר בינינו, והוא יקבל על עצמו ויהפוך לאחראי על ענייני המשרד הארצישראלי בפני אייכמן.</p>
+                                                <p><strong>ש.</strong> הדברים האלה סוכמו באותה ישיבה עם אייכמן.</p>
+                                                <p><strong>ת.</strong> באותה ישיבה עם אייכמן.</p>
+                                                <p><strong>ש.</strong> ומעתה ניהל את העניינים ד"ר רוטנברג?</p>
+                                                <p><strong>ת.</strong> במשרד הארצישראלי.</p>
+                                                <p><strong>ש.</strong> ובקהילה היהודית?</p>
+                                                <p><strong>ת.</strong> ד"ר יוסף לוונהרץ אחרי שחרורו ממעצר.</p>
+                                                <p><strong>מר בר אור</strong> ... מר פליישמן, אני רוצה לחזור עוד פעם לישיבה הראשונה הזאת בסוף מרץ 1938 עם אייכמן. הזוכר אתה בהקשר הדברים שנזכרו אז את המילה "יודנריין"?</p>
+                                                <p><strong>העד פליישמן</strong> בהחלט. משימתו היא לטהר את וינה ואת אוסטריה כולה בדרך הקצרה ביותר מיהודיה.</p>
+                                                <p><strong>ש.</strong> כשאתה אומר משימתו, משימתו של מי, מי אמר זאת?</p>
+                                                <p><strong>ת.</strong> הוא, אייכמן.</p>
+                                                <p class="document-source-notes">מקור: משרד המשפטים, רשומות משפט אייכמן, פרוטוקול המשפט, כרך א'. עדות מוריץ פליישמן, ישיבה 16, עמ' 216.</p>
+                                            </blockquote>
+                                        </div>
+                                    </div>
+                                </div>
+                    </div>
+                </div>
+                 </div>
+        </section>
+
+        <section id="axes-analysis" class="mb-12">
+             <h2 class="section-title p-6 md:p-8 toggle-trigger">
+                <span>ניתוח הצירים המניעים</span>
+                <span class="toggle-icon"></span>
+            </h2>
+            <div class="collapsible-content px-6 pb-6">
+                </div>
+        </section>
+
+        <section id="conclusion-main-card" class="mb-12 card p-0 bg-gray-800 text-white">
+            <h2 class="section-title p-6 md:p-8 toggle-trigger text-teal-300 border-teal-500">
+                <span>סיכום ומסקנות</span>
+                <span class="toggle-icon"></span>
+            </h2>
+            <div class="collapsible-content px-6 pb-6">
+                </div>
+        </section>
+    </main>
+
+    <footer class="text-center py-8 mt-10 border-t border-gray-300">
+        <p class="text-sm text-gray-500">אינפוגרפיקה זו מבוססת על מחקר היסטורי ונועדה למטרות לימוד והנצחה.</p>
+    </footer>
+
+    <script>
+        function wrapChartLabel(str, maxWidth) {
+            if (typeof str !== 'string' || str.length <= maxWidth) { return str; }
+            const words = str.split(' ');
+            let lines = [];
+            let currentLine = words[0];
+            for (let i = 1; i < words.length; i++) {
+                if (currentLine.length + words[i].length + 1 > maxWidth) {
+                    lines.push(currentLine);
+                    currentLine = words[i];
+                } else { currentLine += ' ' + words[i]; }
+            }
+            lines.push(currentLine);
+            return lines;
+        }
+
+        const defaultTooltipCallbacks = {
+            title: function(tooltipItems) {
+                const item = tooltipItems[0];
+                const eventData = timelineEventsData.find(event => new Date(event.date).getTime() === new Date(item.parsed.x).getTime());
+                return eventData ? eventData.eventTitle : (Array.isArray(item.label) ? item.label.join(' ') : item.label);
+            }
+        };
+        
+        const timelineEventsData = [
+            { date: '1933-01-30', eventTitle: 'עליית היטלר לשלטון', shortTitle: 'עליית היטלר', geographicFocus: 'גרמניה', perceivedJewishPopulation: 525000, solutionTitle: 'נישול, הדרה וגלי הגירה', mechanism: 'חוקי נירנברג (1935), אריזציה, עידוד הגירה', documentReferences: ["חוקי נירנברג"] },
+            { date: '1938-03-12', eventTitle: 'האנשלוס - גרמניה מספחת את אוסטריה', shortTitle: 'אנשלוס', geographicFocus: 'אוסטריה (תוספת של כ-192,000 יהודים)', perceivedJewishPopulation: 717000, solutionTitle: 'הגירה בטרור וכפייה', mechanism: 'הלשכה המרכזית להגירת יהודים (וינה - אייכמן), אלימות והשפלה', documentReferences: ["ת/129", "ת/130", "תיאורי האנשלוס"] },
+            { date: '1938-09-30', eventTitle: 'הסכם מינכן וסיפוח חבל הסודטים', shortTitle: 'חבל הסודטים', geographicFocus: 'צ\'כוסלובקיה (סודטים - תוספת של כ-20,000-30,000 יהודים)', perceivedJewishPopulation: 740000, solutionTitle: 'הגירה בטרור וכפייה, הרחבת תחולת חוקי הגזע', mechanism: 'הרחבת פעילות הס"ד והגסטפו', documentReferences: ["הסכם מינכן"] },
+            { date: '1938-11-09', eventTitle: 'ליל הבדולח וישיבת גרינג', shortTitle: 'ליל הבדולח', geographicFocus: 'גרמניה, אוסטריה', perceivedJewishPopulation: 740000, solutionTitle: 'האצת הגירה, נישול כלכלי מוחלט, קנס קולקטיבי', mechanism: 'פקודות גרינג (ת/114), הקמת "מרכז הרייך להגירת יהודים" (ת/116)', documentReferences: ["ת/113", "ת/114", "ת/116"] },
+            { date: '1939-03-15', eventTitle: 'הקמת הפרוטקטורט של בוהמיה ומורביה', shortTitle: 'פרוטקטורט', geographicFocus: 'צ\'כוסלובקיה (שארית - תוספת של כ-118,000 יהודים)', perceivedJewishPopulation: 858000, solutionTitle: 'הגירה בטרור וכפייה, ריכוז והכנות לגירוש', mechanism: 'הלשכה המרכזית להגירת יהודים (פראג - ת/162)', documentReferences: ["ת/162"] },
+            { date: '1939-09-21', eventTitle: 'הפלישה לפולין ואיגרת הבזק', shortTitle: 'פלישה לפולין', geographicFocus: 'פולין (תפיסה נאצית: כ-2 מיליון יהודים נוספים)', perceivedJewishPopulation: 2858000, solutionTitle: 'גירושים המוניים, גטואיזציה, "שמורות" (ניסקו)', mechanism: 'הימלר כנציב לחיזוק הלאום (ת/167, ת/169), איינזצגרופן, שנלבריף היידריך (ת/165), מינוי אייכמן (ת/170)', documentReferences: ["ת/164", "ת/165", "ת/166", "ת/167", "ת/169", "ת/170", "ת/171", "ת/172"] },
+            { date: '1940-06-24', eventTitle: 'כיבוש צרפת ומכתב היידריך לריבנטרופ', shortTitle: 'כיבוש צרפת', geographicFocus: 'צרפת, ארצות השפלה (תפיסה נאצית: כ-3 מיליון יהודים בסה"כ תחת שליטה)', perceivedJewishPopulation: 3000000, solutionTitle: '"פתרון סופי טריטוריאלי" (הגירה כבר לא מספיקה)', mechanism: 'RSHA (היידריך), משרד החוץ (ריבנטרופ)', documentReferences: ["ת/173"] },
+            { date: '1940-08-15', eventTitle: 'תוכנית מדגסקר (דנקר)', shortTitle: 'תוכנית מדגסקר', geographicFocus: 'מדגסקר (כיעד), יהדות אירופה (תפיסה נאצית: כ-4 מיליון יהודים)', perceivedJewishPopulation: 4000000, solutionTitle: 'יישוב המוני במדגסקר תחת פיקוח ס"ס', mechanism: 'מחלקת אייכמן (דנקר - ת/174), RSHA, משרד החוץ, מאבקי סמכויות', documentReferences: ["ת/174"] },
+            { date: '1940-12-01', eventTitle: 'כישלון תוכנית מדגסקר (משוער)', shortTitle: 'כישלון מדגסקר', geographicFocus: 'אירופה', perceivedJewishPopulation: 4000000, solutionTitle: 'חיפוש "פתרונות" חלופיים לאחר כישלון מדגסקר', mechanism: 'הנהגה נאצית, RSHA', documentReferences: [] },
+            { date: '1941-06-22', eventTitle: 'מבצע ברברוסה (פלישה לבריה"מ)', shortTitle: 'מבצע ברברוסה', geographicFocus: 'ברית המועצות (תפיסה נאצית: פוטנציאל למיליוני יהודים נוספים)', perceivedJewishPopulation: 9000000, solutionTitle: 'השמדה המונית בירי (איינזצגרופן)', mechanism: 'איינזצגרופן (ת/175, ת/177), פקודת הקומיסרים (ת/176)', documentReferences: ["ת/175", "ת/176", "ת/177", "ת/178"] },
+            { date: '1942-01-20', eventTitle: 'ועידת ואנזה', shortTitle: 'ועידת ואנזה', geographicFocus: 'כלל אירופה (תפיסה נאצית: כ-11 מיליון יהודים כיעד)', perceivedJewishPopulation: 11000000, solutionTitle: '"הפתרון הסופי" - השמדה שיטתית כוללת', mechanism: 'תיאום בין-משרדי (RSHA מוביל - ת/185), פקודת גרינג (ת/179)', documentReferences: ["ת/179", "ת/180", "ת/181", "ת/182", "ת/183", "ת/184", "ת/185"] },
+            { date: '1942-03-01', eventTitle: '"חלמנו" - השמדת יהודי ורטלנד', shortTitle: 'חלמנו', geographicFocus: 'ורטלנד (פולין)', perceivedJewishPopulation: 11000000, solutionTitle: 'הפתרון הסופי (השמדה במחנות)', mechanism: 'מחנה חלמנו, משאיות גז', documentReferences: [] }, 
+            { date: '1942-07-01', eventTitle: '"מבצע ריינהרד" - השמדת יהודי גנרלגוברנמן', shortTitle: 'מבצע ריינהרד', geographicFocus: 'גנרלגוברנמן (פולין)', perceivedJewishPopulation: 11000000, solutionTitle: 'הפתרון הסופי (השמדה במחנות)', mechanism: 'בלזץ, סוביבור, טרבלינקה', documentReferences: [] }, 
+            { date: '1943-01-01', eventTitle: 'פלנטת האפר של אושוויץ', shortTitle: 'אושוויץ', geographicFocus: 'כלל אירופה (מרכז השמדה)', perceivedJewishPopulation: 11000000, solutionTitle: 'הפתרון הסופי (השמדה תעשייתית)', mechanism: 'אושוויץ-בירקנאו, תאי גזים, משרפות', documentReferences: [] } 
+        ];
+        
+        const jewishPopulationChartConfig = {
+            type: 'line',
+            data: {
+                 datasets: [{
+                    label: 'הערכה נאצית למספר היהודים תחת שליטתם',
+                    data: timelineEventsData.map(item => ({x: item.date, y: item.perceivedJewishPopulation})),
+                    borderColor: '#F4A261',
+                    backgroundColor: 'rgba(244, 162, 97, 0.2)',
+                    tension: 0.1,
+                    fill: true,
+                    pointRadius: 5,
+                    pointHoverRadius: 7,
+                    pointBackgroundColor: '#F4A261',
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    x: {
+                        type: 'time',
+                        time: {
+                            unit: 'year',
+                            tooltipFormat: 'MMM yy', 
+                            displayFormats: {
+                                year: 'yyyy'
+                            }
+                        },
+                        title: { display: true, text: 'ציר זמן (אירועים מרכזיים)', color: '#0A2463'},
+                        ticks: { color: '#0A2463', maxRotation: 0, autoSkipPadding: 20, font: {size: 10} },
+                        grid: { color: '#e0e7ff' }
+                    },
+                    y: {
+                        beginAtZero: false, 
+                        title: { display: true, text: 'מספר יהודים (הערכה נאצית)', color: '#0A2463'},
+                        ticks: { 
+                            color: '#0A2463',
+                            callback: function(value) { 
+                                if (value >= 1000000) return (value / 1000000).toFixed(1) + 'M';
+                                if (value >= 1000) return (value / 1000).toFixed(0) + 'K';
+                                return value;
+                             } 
+                        },
+                        grid: { color: '#e0e7ff' }
+                    }
+                },
+                plugins: {
+                    legend: { display: false },
+                    title: {
+                        display: true,
+                        text: 'גידול במספר היהודים (תפיסה נאצית) עם התפשטות הכיבוש',
+                        color: '#0A2463', font: { size: 16, weight: 'bold' }, padding: {bottom: 15}
+                    },
+                    tooltip: {
+                        callbacks: {
+                            title: function(tooltipItems) {
+                                const item = tooltipItems[0];
+                                const eventData = timelineEventsData[item.dataIndex];
+                                return eventData ? eventData.eventTitle : 'נתונים';
+                            },
+                            label: function(tooltipItem) {
+                                let label = 'אוכלוסייה יהודית (הערכה נאצית): ';
+                                label += tooltipItem.parsed.y.toLocaleString('he-IL');
+                                return label;
+                            }
+                        }
+                    }
+                }
+            }
+        };
+        
+        const auschwitzVictimsData = {
+            labels: [
+                wrapChartLabel('יהודים', 16), 
+                wrapChartLabel('פולנים', 16), 
+                wrapChartLabel('צוענים (רומה)', 16), 
+                wrapChartLabel('שבויי מלחמה סובייטים', 16), 
+                wrapChartLabel('אחרים', 16)
+            ],
+            datasets: [{
+                label: 'הערכת מספר הקורבנות באושוויץ (דמה)',
+                data: [1100000, 140000, 23000, 15000, 25000], 
+                backgroundColor: ['#0A2463', '#3E8989', '#A5D8DD', '#F4A261', '#7b8c9d'],
+                borderColor: '#ffffff', borderWidth: 1
+            }]
+        };
+        const auschwitzConfig = {
+            type: 'bar', data: auschwitzVictimsData,
+            options: {
+                responsive: true, maintainAspectRatio: false, indexAxis: 'y',
+                scales: { x: { beginAtZero: true, ticks: { color: '#0A2463' }, grid: { color: '#e0e7ff' } }, y: { ticks: { color: '#0A2463', font: {size: 10 } }, grid: { display: false } } },
+                plugins: { legend: { position: 'top', labels: { color: '#0A2463' } }, title: { display: true, text: 'הערכת מספר הקורבנות באושוויץ (נתוני דמה)', color: '#0A2463', font: { size: 16, weight: 'bold' } }, tooltip: { callbacks: defaultTooltipCallbacks } }
+            }
+        };
+        
+        window.onload = function() {
+            const jewishPopulationCtx = document.getElementById('jewishPopulationChart');
+            let jewishPopulationChartInstance;
+            if (jewishPopulationCtx) {
+                jewishPopulationChartInstance = new Chart(jewishPopulationCtx, jewishPopulationChartConfig);
+            }
+
+            const auschwitzCtx = document.getElementById('auschwitzVictimsChart');
+            if (auschwitzCtx) {
+                new Chart(auschwitzCtx, auschwitzConfig);
+            }
+
+            const eventTimelineContainer = document.getElementById('eventTimeline');
+            const currentGeographicFocusDisplay = document.getElementById('currentGeographicFocusDisplay');
+            const currentPerceivedPopulationDisplay = document.getElementById('currentPerceivedPopulationDisplay');
+            const currentSolutionDisplay = document.getElementById('currentSolutionDisplay');
+            const naziMechanismDisplay = document.getElementById('naziMechanismDisplay');
+            const currentSolutionDocuments = document.getElementById('currentSolutionDocuments');
+            const currentMechanismDocuments = document.getElementById('currentMechanismDocuments');
+
+
+            timelineEventsData.forEach((eventData, index) => {
+                const eventDiv = document.createElement('div');
+                eventDiv.classList.add('timeline-event');
+                if (index === 0) eventDiv.classList.add('active'); 
+                eventDiv.dataset.eventIndex = index;
+                
+                const titleEl = document.createElement('h4');
+                titleEl.textContent = eventData.shortTitle || eventData.eventTitle;
+                eventDiv.appendChild(titleEl);
+                
+                const dateEl = document.createElement('p');
+                const eventDate = new Date(eventData.date);
+                dateEl.textContent = eventDate.toLocaleDateString('he-IL', { year: 'numeric', month: 'short', day: 'numeric' });
+                eventDiv.appendChild(dateEl);
+                
+                eventTimelineContainer.appendChild(eventDiv);
+
+                eventDiv.addEventListener('click', () => {
+                    document.querySelectorAll('.timeline-event.active').forEach(el => el.classList.remove('active'));
+                    eventDiv.classList.add('active');
+                    
+                    currentGeographicFocusDisplay.innerHTML = eventData.geographicFocus ? eventData.geographicFocus.replace(/\n/g, '<br>') : '-';
+                    currentPerceivedPopulationDisplay.textContent = eventData.perceivedJewishPopulation ? eventData.perceivedJewishPopulation.toLocaleString('he-IL') : '-';
+                    currentSolutionDisplay.innerHTML = eventData.solutionTitle ? eventData.solutionTitle.replace(/\n/g, '<br>') : '-';
+                    naziMechanismDisplay.innerHTML = eventData.mechanism ? eventData.mechanism.replace(/\n/g, '<br>') : '-';
+                    
+                    currentSolutionDocuments.innerHTML = ''; 
+                    currentMechanismDocuments.innerHTML = ''; 
+
+                    if (eventData.documentReferences && eventData.documentReferences.length > 0) {
+                        const docsHtml = eventData.documentReferences.map(doc => `<span class='inline-block bg-teal-100 text-teal-700 text-xs px-2 py-1 rounded-full mr-1 mb-1'>${doc}</span>`).join('');
+                        currentSolutionDocuments.innerHTML = `<strong>מסמכים מרכזיים:</strong> ${docsHtml}`;
+                    }
+                });
+            });
+            
+            const initialActiveEvent = document.querySelector('.timeline-event.active');
+            if (initialActiveEvent) {
+                initialActiveEvent.click();
+            } else if (timelineEventsData.length > 0) {
+                document.querySelector('.timeline-event').click();
+            }
+
+            document.querySelectorAll('.toggle-trigger').forEach(trigger => {
+                trigger.addEventListener('click', function(e) {
+                    e.stopPropagation(); 
+                    
+                    this.classList.toggle('open');
+                    let content;
+                    if (this.classList.contains('event-title')) {
+                         content = this.closest('.event-title-container').nextElementSibling;
+                    } else { 
+                        content = this.nextElementSibling;
+                    }
+                    
+                    if (content && content.classList.contains('collapsible-content')) {
+                        const isOpening = content.style.display === "none" || content.style.display === "";
+                        content.style.display = isOpening ? "block" : "none";
+                    }
+                });
+            });
+            
+            document.querySelectorAll('.collapsible-content').forEach(content => {
+                content.style.display = "none";
+            });
+
+        };
+    </script>
+</body>
+</html>
