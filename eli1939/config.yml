@@ -1,0 +1,48 @@
+backend:
+  name: github
+  repo: eli1939/-1939 
+  branch: main
+
+collections:
+  - name: "general_content"
+    label: "תוכן כללי (קובץ ראשי)"
+    files:
+      - label: "נתונים מרכזיים של האינפוגרפיקה"
+        name: "main_data"
+        file: "data.json" 
+        format: "json"
+        fields:
+          - { label: "כותרת ראשית של הדף", name: "pageTitle", widget: "string" }
+          - label: "מבוא"
+            name: "introduction"
+            widget: "object"
+            fields:
+              - { label: "כותרת מבוא", name: "title", widget: "string" }
+              - label: "פסקאות מבוא"
+                name: "paragraphs"
+                widget: "list"
+                field: { label: "פסקה", name: "paragraph", widget: "text" }
+          - label: "ציר הזמן המרכזי (Core Timeline)"
+            name: "coreTimeline"
+            widget: "object"
+            fields:
+              - { label: "כותרת ציר הזמן", name: "title", widget: "string" }
+              - { label: "תיאור ציר הזמן", name: "description", widget: "text" }
+              - label: "אירועים בציר הזמן"
+                name: "events"
+                widget: "list"
+                summary: "{{fields.shortTitle}} - {{fields.date}}" 
+                fields: 
+                  - { label: "תאריך", name: "date", widget: "date", format: "YYYY-MM-DD", date_format: "DD.MM.YYYY", time_format: false, required: false }
+                  - { label: "כותרת מלאה של האירוע", name: "eventTitle", widget: "string", required: false }
+                  - { label: "כותרת קצרה (לתצוגה בציר האופקי)", name: "shortTitle", widget: "string", required: false }
+                  - { label: "מוקד גיאוגרפי", name: "geographicFocus", widget: "string", required: false }
+                  - { label: "היקף אוכלוסייה יהודית (תפיסה נאצית)", name: "perceivedJewishPopulation", widget: "number", value_type: "int", required: false }
+                  - { label: "סוג ה'פתרון' הנשקל/מיושם", name: "solutionTitle", widget: "string", required: false }
+                  - { label: "התפתחות המנגנון הנאצי", name: "mechanism", widget: "text", required: false }
+                  - label: "הפניות למסמכים"
+                    name: "documentReferences"
+                    widget: "list"
+                    summary: "{{fields.doc_ref}}"
+                    field: { label: "הפניה למסמך", name: "doc_ref", widget: "string" }
+                    required: false
